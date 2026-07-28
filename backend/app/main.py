@@ -1,3 +1,4 @@
+from routers import complaints
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,6 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(complaints.router)
 
 @app.get("/")
 def root():
