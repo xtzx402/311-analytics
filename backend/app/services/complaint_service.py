@@ -19,6 +19,9 @@ def decode_cursor(cursor: str) -> tuple[datetime, int]:
     data = json.loads(raw)
     return datetime.fromisoformat(data["created_date"]), data["unique_key"]
 
+def get_complaint_by_key(db: Session, unique_key: int) -> Complaint | None:
+    stmt = select(Complaint).where(Complaint.unique_key == unique_key)
+    return db.execute(stmt).scalar_one_or_none()
 
 def get_complaints(
     db: Session,

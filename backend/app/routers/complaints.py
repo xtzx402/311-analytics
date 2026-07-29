@@ -8,6 +8,10 @@ from database import get_db
 from schemas.complaint import ComplaintOut, ComplaintListResponse
 from services.complaint_service import get_complaints
 
+from fastapi import HTTPException
+
+from services.complaint_service import get_complaints, get_complaint_by_key
+
 router = APIRouter(prefix="/complaints", tags=["complaints"])
 
 
@@ -36,3 +40,10 @@ def list_complaints(
         items=[ComplaintOut.model_validate(r) for r in rows],
         next_cursor=next_cursor,
     )
+
+@router.get("/{unique_key}", response_model=ComplaintOut)
+def get_complaint(unique_key: int, db: Session = Depends(get_db)):
+    complaint = get_complaint_by_key(db, unique_key)
+    if complaint is None:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    return ComplaintOut.model_validate(complaint)
