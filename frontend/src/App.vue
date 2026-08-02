@@ -1,18 +1,11 @@
 <script setup>
-import { ref } from 'vue'
-import FilterSidebar from './components/FilterSidebar.vue'
-import ComplaintMap from './components/ComplaintMap.vue'
-
-const filters = ref({ year: 2025, complaintType: '' })
-
-function handleFilterChange(newFilters) {
-  filters.value = newFilters
-}
+import { RouterLink, RouterView } from 'vue-router'
 </script>
 
 <template>
-  <div style="display: flex;">
-    <FilterSidebar @filter-change="handleFilterChange" />
-    <ComplaintMap :year="filters.year" :complaint-type="filters.complaintType" />
-  </div>
+  <nav style="padding: 12px; background: #333;">
+    <RouterLink to="/" style="color: white; margin-right: 16px;">Map</RouterLink>
+    <RouterLink to="/stats" style="color: white;">Statistics</RouterLink>
+  </nav>
+  <RouterView />
 </template>
