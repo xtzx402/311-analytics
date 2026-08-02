@@ -67,6 +67,20 @@ def get_clusters(
 def list_complaint_types(db: Session = Depends(get_db)):
     return {"types": get_distinct_complaint_types(db)}
 
+from services.complaint_service import (
+    get_complaints, get_complaint_by_key, get_cluster_stats,
+    get_distinct_complaint_types, get_stats_summary,
+)
+
+
+@router.get("/stats/summary")
+def stats_summary(
+    year: Optional[int] = None,
+    complaint_type: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    return get_stats_summary(db=db, year=year, complaint_type=complaint_type)
+
 @router.get("/{unique_key}", response_model=ComplaintOut)
 def get_complaint(unique_key: int, db: Session = Depends(get_db)):
     complaint = get_complaint_by_key(db, unique_key)

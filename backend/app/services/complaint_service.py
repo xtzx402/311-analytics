@@ -101,3 +101,57 @@ def get_cluster_stats(
 def get_distinct_complaint_types(db: Session) -> list[str]:
     stmt = select(Complaint.complaint_type).distinct().order_by(Complaint.complaint_type)
     return [row[0] for row in db.execute(stmt).all()]
+
+def get_stats_summary(
+    db: Session,
+    year: Optional[int] = None,
+    complaint_type: Optional[str] = None,
+):
+    conditions = []
+    params = {}
+
+    if year:
+        conditions.append("created_date >= :start_date AND created_date <= :end_date")
+        params["start_date"] = f"{year}-01-01"
+        params["end_date"] = f"{year}-12-31"
+
+    if complaint_type:
+        conditions.append("complaint_type = :complaint_type")
+        params["complaint_type"] = complaint_type
+
+    where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
+    total = db.execute(
+        text(f"SELECT COUNT(*) FROM complaints {where_clause}"), params
+    ).scalar()
+
+    by_type = db.execute(text(f"""
+        SELECT complaint_type, COUNT(*) as count
+        FROM complaints {where_clause}
+        GROUP BY complaint_type
+        ORDER BY count DESC
+        LIMIT 10
+    """), params).all()
+
+    borough_conditions = conditions + ["borough IS NOT NULL"]
+    borough_where = f"WHERE {' AND '.join(borough_conditions)}"
+    by_borough = db.execute(text(f"""
+        SELECT borough, COUNT(*) as count
+        FROM complaints {borough_where}
+        GROUP BY borough
+        ORDER BY count DESC
+    """), params).all()
+
+    trend = db.execute(text(f"""
+        SELECT DATE_TRUNC('month', created_date) as month, COUNT(*) as count
+        FROM complaints {where_clause}
+        GROUP BY month
+        ORDER BY month
+    """), params).all()
+
+    return {
+        "total": total,
+        "by_type": [{"type": r[0], "count": r[1]} for r in by_type],
+        "by_borough": [{"borough": r[0], "count": r[1]} for r in by_borough],
+        "trend": [{"month": r[0].isoformat(), "count": r[1]} for r in trend],
+    }
